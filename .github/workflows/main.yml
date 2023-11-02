@@ -1,0 +1,40 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1'  # Adjust the version as needed
+
+    - name: Build the project
+      run: dotnet build --configuration ${{ env.BuildConfiguration }}
+
+    - name: Publish the project
+      run: dotnet publish --configuration ${{ env.BuildConfiguration }} --output ${{ github.workspace }}/publish
+
+    - name: Archive files
+      run: |
+        mkdir -p ${{ github.workspace }}/artifacts
+        zip -r ${{ github.workspace }}/artifacts/artifacts.zip ${{ github.workspace }}/publish
+      working-directory: ${{ github.workspace }}
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}/artifacts
