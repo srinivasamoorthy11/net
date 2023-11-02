@@ -1,40 +1,32 @@
-name: Build and Publish
+trigger:
+  - main # Replace with your branch name
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - '*'
+pr:
+  - '*'
 
-jobs:
-  build:
-    runs-on: windows-latest
+pool:
+  vmImage: 'windows-latest'
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+steps:
+  - script: dotnet restore
+    displayName: 'Restore .NET Packages'
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1'  # Adjust the version as needed
+  - script: dotnet build --configuration Release
+    displayName: 'Build .NET Application'
 
-    - name: Build the project
-      run: dotnet build --configuration ${{ env.BuildConfiguration }}
+  - script: dotnet publish -c Release -o $(Build.ArtifactStagingDirectory)
+    displayName: 'Publish .NET Application'
 
-    - name: Publish the project
-      run: dotnet publish --configuration ${{ env.BuildConfiguration }} --output ${{ github.workspace }}/publish
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'drop'
 
-    - name: Archive files
-      run: |
-        mkdir -p ${{ github.workspace }}/artifacts
-        zip -r ${{ github.workspace }}/artifacts/artifacts.zip ${{ github.workspace }}/publish
-      working-directory: ${{ github.workspace }}
-      
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: artifacts
-        path: ${{ github.workspace }}/artifacts
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'publish'
+      publishWebProjects: true
+      projects: '**/*.csproj'
+      arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+
+# Add deployment steps here
