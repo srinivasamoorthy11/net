@@ -10,6 +10,18 @@ pool:
 steps:
   - script: dotnet restore
     displayName: 'Restore .NET Packages'
+  
+  - script: dotnet build program.csproj
+    displayName: 'Build .NET Application'
+    workingDirectory: $(Build.SourcesDirectory)
+  
+  - powershell: |
+      Write-Host "Current Working Directory: $(System.DefaultWorkingDirectory)"
+    displayName: 'Display Working Directory'
+  
+  - script: dotnet build program.cs
+    displayName: 'Build .NET Application'
+
 
   - script: dotnet build --configuration Release
     displayName: 'Build .NET Application'
