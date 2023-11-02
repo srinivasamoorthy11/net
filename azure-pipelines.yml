@@ -1,34 +1,40 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+name: Build and Publish
 
-trigger:
-- main  # Replace with the branch you want to trigger the pipeline on
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
 
-pr:
-- '*'
+jobs:
+  build:
+    runs-on: windows-latest
 
-pool:
-  vmImage: 'windows-latest'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-    installationPathSelection: 'version'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1'  # Adjust the version as needed
 
-- script: dotnet build --configuration $(BuildConfiguration)
-  displayName: 'Build the project'
+    - name: Build the project
+      run: dotnet build --configuration ${{ env.BuildConfiguration }}
 
-- script: dotnet publish --configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish
-  displayName: 'Publish the project'
+    - name: Publish the project
+      run: dotnet publish --configuration ${{ env.BuildConfiguration }} --output ${{ github.workspace }}/publish
 
-- task: ArchiveFiles@2
-  inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/artifacts.zip'
-    replaceExistingArchive: true
+    - name: Archive files
+      run: |
+        mkdir -p ${{ github.workspace }}/artifacts
+        zip -r ${{ github.workspace }}/artifacts/artifacts.zip ${{ github.workspace }}/publish
+      working-directory: ${{ github.workspace }}
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}/artifacts
