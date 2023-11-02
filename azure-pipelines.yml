@@ -8,8 +8,8 @@ pool:
   vmImage: 'windows-latest'
 
 steps:
-  - script: dotnet restore
-    displayName: 'Restore .NET Packages'
+  #- script: dotnet restore
+  #  displayName: 'Restore .NET Packages'
   
   - script: dotnet build program.csproj
     displayName: 'Build .NET Application'
